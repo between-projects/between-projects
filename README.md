@@ -1,9 +1,32 @@
-- 👋 Hi, I'm Jonah Langenbeck. I'm the founding director of @between-projects, a studio for connection and growth.
-- 👀 I'm interested in personal web patterns, comms strategy, and design. 
-- 🌱 I'm currently learning Typescript, Next.js, Tailwind CSS, and Sanity and I'm spending time on WordPress 6 FSE and Block Themes.
-- 📫 You can email me at jonah@between-projects.com 
+# between-projects
 
-<!---
-between-projects/between-projects is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-You can click the Preview link to take a look at your changes.
---->
+**A studio for connection and growth.**
+
+---
+
+## About
+
+Hi, I'm **Jonah Langenbeck**, founding director of [@between-projects](https://github.com/between-projects). I work at the intersection of design, strategy, and technology to create meaningful digital experiences.
+
+## Interests
+
+- Personal web patterns and digital identity
+- Communications strategy
+- Design systems and visual language
+- Web infrastructure and architecture
+
+## Currently Learning
+
+- **TypeScript** — Type-safe JavaScript development
+- **Next.js** — React framework for production
+- **Tailwind CSS** — Utility-first CSS framework
+- **Sanity** — Structured content platform
+- **WordPress 6 FSE** — Full Site Editing and Block Themes
+
+## Get in Touch
+
+📫 **Email:** [jonah@between-projects.com](mailto:jonah@between-projects.com)
+
+---
+
+*Building bridges between ideas and execution.*

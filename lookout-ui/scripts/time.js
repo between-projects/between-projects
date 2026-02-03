@@ -1,5 +1,5 @@
 const greetingSelector = ".greeting";
-const greetingTimeSelector = ".greeting .mono";
+const greetingTimeSelector = "[data-lookout-time]";
 const moduleTimeSelector = ".module-time .time";
 
 const getPeriod = (hours) => {

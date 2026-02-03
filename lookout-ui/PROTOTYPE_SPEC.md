@@ -1,3 +1,10 @@
+<!--
+STATUS: FROZEN
+These documents define the intent, tone, hierarchy, and constraints of Lookout.
+They may not be altered by implementation tools or agents.
+Any change requires explicit human review and re-freezing.
+-->
+
 # Lookout Primary View — Static Prototype Specification
 
 Constrained by DESIGN_BRIEF.md and DESIGN_SYSTEM.md.

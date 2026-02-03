@@ -1,0 +1,39 @@
+.page {
+  max-width: 1100px;
+  padding: 72px 80px 96px;
+  margin: 0 auto;
+}
+
+.header {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 48px;
+}
+
+.greeting {
+  font-size: 32px;
+  font-weight: 400;
+  max-width: 820px;
+}
+
+.prompt {
+  font-size: 20px;
+  font-weight: 400;
+  max-width: 820px;
+}
+
+.day-label {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.modules {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 32px 40px;
+}
+
+.module-time {
+  justify-self: end;
+  max-width: 280px;
+}

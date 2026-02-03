@@ -1,0 +1,44 @@
+.module {
+  padding: 22px 24px;
+  background: var(--module-bg);
+  border: 1px solid var(--module-border);
+  border-radius: 16px;
+}
+
+.module p + p {
+  margin-top: 6px;
+}
+
+.list {
+  display: grid;
+  gap: 10px;
+}
+
+.list li {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.module-time .time {
+  font-size: 24px;
+}
+
+.module-time .weather {
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.module-time .location {
+  font-size: 14px;
+}
+
+.module-appointments .mono {
+  min-width: 80px;
+}
+
+.module-tasks .list li,
+.module-notes .list li,
+.module-links .list li {
+  color: var(--text-primary);
+}

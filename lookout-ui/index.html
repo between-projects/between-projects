@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lookout</title>
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/layout.css" />
+    <link rel="stylesheet" href="styles/modules.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="header">
+        <p class="greeting">
+          Good Morning, Jonah. It's <span class="mono">x:xx xM</span> and <span class="mono">xx°F</span> outside.
+        </p>
+        <p class="prompt">
+          Would you like to do a deep dive on your appointments, tasks, semester goals or notes?
+        </p>
+        <p class="day-label">Here's your Day At A Glance</p>
+      </header>
+
+      <section class="modules">
+        <section class="module module-time" aria-label="Time and weather">
+          <p class="mono time">x:xx xM</p>
+          <p class="mono weather">xx°F, Clear</p>
+          <p class="muted location">Brooklyn, NY</p>
+        </section>
+
+        <section class="module module-appointments" aria-label="Appointments">
+          <ul class="list">
+            <li><span class="mono">9:00 AM</span> Studio sync</li>
+            <li><span class="mono">1:30 PM</span> Project review</li>
+            <li><span class="mono">4:00 PM</span> Walk and reset</li>
+          </ul>
+        </section>
+
+        <section class="module module-tasks" aria-label="Tasks">
+          <ul class="list">
+            <li>Draft outline for semester goals</li>
+            <li>Send follow-up notes to team</li>
+            <li>Prepare materials for tomorrow</li>
+            <li>Sort links from this week</li>
+          </ul>
+        </section>
+
+        <section class="module module-notes" aria-label="Notes">
+          <ul class="list">
+            <li>Ambient rooms I want to remember</li>
+            <li>Ideas for the next project sprint</li>
+          </ul>
+        </section>
+
+        <section class="module module-links" aria-label="Links">
+          <ul class="list">
+            <li>Sister City notes and textures</li>
+            <li>Quiet tools for planning</li>
+            <li>Blue gradient studies</li>
+          </ul>
+        </section>
+      </section>
+    </main>
+  </body>
+</html>

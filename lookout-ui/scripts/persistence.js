@@ -1,3 +1,4 @@
+import "./time.js";
 import "./weather.js";
 
 const STORAGE_KEY = "lookout:v1";

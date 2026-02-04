@@ -1,7 +1,9 @@
 const STORAGE_KEY = "lookout:v1";
 const TASK_LIST_SELECTOR = ".module-tasks .list";
+const TASK_MODULE_SELECTOR = ".module-tasks";
 
 let editing = false;
+let textareaEl = null;
 
 const loadState = () => {
   try {
@@ -35,75 +37,56 @@ const sanitizeTasks = (items) =>
     .map((item) => sanitizeText(item))
     .filter((item) => item.length > 0);
 
-const clearList = (listEl) => {
-  listEl.innerHTML = "";
-};
-
-const focusEnd = (element) => {
-  element.focus();
-  const selection = window.getSelection();
-  if (!selection) {
-    return;
-  }
-  const range = document.createRange();
-  range.selectNodeContents(element);
-  range.collapse(false);
-  selection.removeAllRanges();
-  selection.addRange(range);
-};
-
-const makeEditableItem = (text = "") => {
-  const item = document.createElement("li");
-  item.contentEditable = "true";
-  item.spellcheck = false;
-  item.textContent = text;
-  return item;
+const buildTextarea = (value) => {
+  const textarea = document.createElement("textarea");
+  textarea.className = "tasks-editor";
+  textarea.value = value;
+  textarea.spellcheck = false;
+  return textarea;
 };
 
 const enterEditMode = () => {
   if (editing) {
     return;
   }
-  const listEl = document.querySelector(TASK_LIST_SELECTOR);
-  if (!listEl) {
+
+  const moduleEl = document.querySelector(TASK_MODULE_SELECTOR);
+  if (!moduleEl) {
     return;
   }
-  editing = true;
+
   const state = loadState();
   const tasks = Array.isArray(state.tasks) ? state.tasks : [];
-  clearList(listEl);
-
-  if (tasks.length === 0) {
-    const item = makeEditableItem("");
-    listEl.appendChild(item);
-    focusEnd(item);
-    return;
-  }
-
-  tasks.forEach((task, index) => {
-    const text = typeof task === "string" ? task : task?.text;
-    const item = makeEditableItem(sanitizeText(text));
-    listEl.appendChild(item);
-    if (index === 0) {
-      focusEnd(item);
+  const lines = tasks.map((task) => {
+    if (typeof task === "string") {
+      return task;
     }
+    return typeof task?.text === "string" ? task.text : "";
   });
+
+  editing = true;
+  moduleEl.classList.add("tasks-editing");
+  textareaEl = buildTextarea(lines.join("\n"));
+  moduleEl.appendChild(textareaEl);
+  textareaEl.focus();
+  textareaEl.setSelectionRange(textareaEl.value.length, textareaEl.value.length);
 };
 
 const exitEditMode = () => {
   if (!editing) {
     return;
   }
-  const listEl = document.querySelector(TASK_LIST_SELECTOR);
-  if (!listEl) {
+
+  const moduleEl = document.querySelector(TASK_MODULE_SELECTOR);
+  if (!moduleEl) {
     editing = false;
     return;
   }
 
   const state = loadState();
   const previousTasks = Array.isArray(state.tasks) ? state.tasks : [];
-  const items = Array.from(listEl.querySelectorAll("li"));
-  const texts = sanitizeTasks(items.map((item) => item.textContent || ""));
+  const lines = textareaEl ? textareaEl.value.split("\n") : [];
+  const texts = sanitizeTasks(lines);
 
   const tasks = texts.map((text, index) => {
     const previous = previousTasks[index];
@@ -112,6 +95,12 @@ const exitEditMode = () => {
   });
 
   saveState({ ...state, tasks });
+
+  if (textareaEl) {
+    textareaEl.remove();
+  }
+  textareaEl = null;
+  moduleEl.classList.remove("tasks-editing");
   editing = false;
   window.dispatchEvent(new Event("lookout:tasks-updated"));
 };
@@ -124,8 +113,7 @@ const handleDocumentKeydown = (event) => {
     return;
   }
 
-  const target = event.target;
-  if (target instanceof HTMLElement && target.isContentEditable) {
+  if (editing) {
     if (event.key === "Escape") {
       event.preventDefault();
       exitEditMode();
@@ -133,67 +121,14 @@ const handleDocumentKeydown = (event) => {
     return;
   }
 
-  if (event.key === "Escape" && editing) {
-    event.preventDefault();
-    exitEditMode();
-    return;
-  }
-
-  if (!editing && event.key.toLowerCase() === "e") {
+  if (event.key.toLowerCase() === "e") {
     event.preventDefault();
     enterEditMode();
   }
 };
 
-const handleListKeydown = (event) => {
-  if (!editing) {
-    return;
-  }
-
-  const listEl = document.querySelector(TASK_LIST_SELECTOR);
-  if (!listEl) {
-    return;
-  }
-
-  const target = event.target;
-  if (!(target instanceof HTMLElement) || target.tagName !== "LI") {
-    return;
-  }
-
-  if (event.key === "Enter") {
-    event.preventDefault();
-    const newItem = makeEditableItem("");
-    if (target.nextSibling) {
-      listEl.insertBefore(newItem, target.nextSibling);
-    } else {
-      listEl.appendChild(newItem);
-    }
-    focusEnd(newItem);
-    return;
-  }
-
-  if (event.key === "Backspace") {
-    const text = sanitizeText(target.textContent || "");
-    if (text.length > 0) {
-      return;
-    }
-    const items = Array.from(listEl.querySelectorAll("li"));
-    if (items.length <= 1) {
-      return;
-    }
-    event.preventDefault();
-    const index = items.indexOf(target);
-    const nextFocus = items[index - 1] || items[index + 1];
-    target.remove();
-    if (nextFocus) {
-      focusEnd(nextFocus);
-    }
-  }
-};
-
 const initTaskEdit = () => {
   document.addEventListener("keydown", handleDocumentKeydown);
-  document.addEventListener("keydown", handleListKeydown);
 };
 
 initTaskEdit();

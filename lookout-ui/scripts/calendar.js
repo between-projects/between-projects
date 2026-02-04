@@ -1,8 +1,10 @@
+import { GOOGLE_CLIENT_ID } from "./config.js";
+
 const CALENDAR_TOKEN_KEY = "lookout:calendar:token:v1";
 const CALENDAR_CACHE_KEY = "lookout:calendar:cache:v1";
 const CACHE_TTL_MS = 7 * 60 * 1000;
 
-const CLIENT_ID = "PASTE_CLIENT_ID_HERE";
+const CLIENT_ID = GOOGLE_CLIENT_ID;
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
 const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
@@ -32,7 +34,7 @@ const createCodeChallenge = async (verifier) => {
 
 const saveToken = (token) => {
   try {
-    window.localStorage.setItem(CALENDAR_TOKEN_KEY, JSON.stringify(token));
+    window.sessionStorage.setItem(CALENDAR_TOKEN_KEY, JSON.stringify(token));
   } catch (error) {
     // Silent failure preserves calm.
   }
@@ -40,7 +42,7 @@ const saveToken = (token) => {
 
 const loadToken = () => {
   try {
-    const raw = window.localStorage.getItem(CALENDAR_TOKEN_KEY);
+    const raw = window.sessionStorage.getItem(CALENDAR_TOKEN_KEY);
     if (!raw) {
       return null;
     }
@@ -95,8 +97,6 @@ const startAuth = async () => {
     scope: SCOPES,
     code_challenge: challenge,
     code_challenge_method: "S256",
-    access_type: "offline",
-    prompt: "consent",
     state,
   });
 
@@ -131,36 +131,6 @@ const exchangeCodeForToken = async (code) => {
   const data = await response.json();
   return {
     access_token: data.access_token,
-    refresh_token: data.refresh_token,
-    expires_at: Date.now() + (data.expires_in || 0) * 1000,
-  };
-};
-
-const refreshAccessToken = async (token) => {
-  if (!token || !token.refresh_token) {
-    return null;
-  }
-  const body = new URLSearchParams({
-    client_id: CLIENT_ID,
-    grant_type: "refresh_token",
-    refresh_token: token.refresh_token,
-  });
-  const response = await fetch(TOKEN_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json();
-  return {
-    access_token: data.access_token,
-    refresh_token: token.refresh_token,
     expires_at: Date.now() + (data.expires_in || 0) * 1000,
   };
 };
@@ -301,18 +271,13 @@ const initCalendar = async () => {
     }
   }
 
-  let token = loadToken();
-  if (!token) {
+  if (!CLIENT_ID || CLIENT_ID === "PASTE_CLIENT_ID_HERE") {
     return;
   }
 
-  if (tokenExpired(token)) {
-    const refreshed = await refreshAccessToken(token);
-    if (!refreshed) {
-      return;
-    }
-    token = refreshed;
-    saveToken(refreshed);
+  let token = loadToken();
+  if (!token || tokenExpired(token)) {
+    return;
   }
 
   if (hydrateFromCache()) {

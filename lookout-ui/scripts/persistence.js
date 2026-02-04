@@ -2,6 +2,7 @@ import "./time.js";
 import "./weather.js";
 
 import "./calendar.js";
+import "./task-edit.js";
 
 const STORAGE_KEY = "lookout:v1";
 
@@ -191,6 +192,17 @@ const wireTaskToggle = (element) => {
   element.dataset.taskToggleBound = "true";
 };
 
+const hydrateTasks = () => {
+  const { state, shouldPersist } = loadState();
+  if (shouldPersist) {
+    saveState(state);
+  }
+  taskState = state.tasks;
+  const taskList = document.querySelector(selectors.tasks);
+  setTaskItems(taskList, state.tasks, emptyStates.tasks);
+  wireTaskToggle(taskList);
+};
+
 const hydrate = () => {
   const { state, shouldPersist } = loadState();
   if (shouldPersist) {
@@ -203,5 +215,7 @@ const hydrate = () => {
   setListItems(document.querySelector(selectors.notes), state.notes, emptyStates.notes);
   setListItems(document.querySelector(selectors.links), state.links, emptyStates.links);
 };
+
+window.addEventListener("lookout:tasks-updated", hydrateTasks);
 
 hydrate();

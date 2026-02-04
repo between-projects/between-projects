@@ -43,22 +43,32 @@
   color: var(--text-primary);
 }
 
+.module-tasks .list {
+  margin-left: -28px;
+  padding-left: 28px;
+}
+
 .module-tasks .list li {
-  position: relative;
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: baseline;
 }
 
 .module-tasks .task-checkbox {
-  position: absolute;
-  left: -22px;
-  top: 0.2em;
+  width: 16px;
+  height: 16px;
+  margin: 0;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
   transition: opacity 0.2s ease;
 }
 
 .module-tasks:hover .task-checkbox,
 .module-tasks:focus-within .task-checkbox {
-  opacity: 0.7;
+  opacity: 1;
+  visibility: visible;
   pointer-events: auto;
 }
 

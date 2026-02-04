@@ -42,3 +42,32 @@
 .module-links .list li {
   color: var(--text-primary);
 }
+
+.module-tasks .list li {
+  position: relative;
+}
+
+.module-tasks .task-checkbox {
+  position: absolute;
+  left: -22px;
+  top: 0.2em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.module-tasks:hover .task-checkbox,
+.module-tasks:focus-within .task-checkbox {
+  opacity: 0.7;
+  pointer-events: auto;
+}
+
+.module-tasks .task-completed {
+  opacity: 0.6;
+}
+
+.module-tasks .task-completed .task-text {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(242, 245, 248, 0.6);
+}

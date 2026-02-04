@@ -1,6 +1,8 @@
 import "./time.js";
 import "./weather.js";
 
+import "./calendar.js";
+
 const STORAGE_KEY = "lookout:v1";
 
 const DEFAULT_STATE = {

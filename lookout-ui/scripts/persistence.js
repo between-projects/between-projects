@@ -2,6 +2,7 @@ import "./time.js";
 import "./weather.js";
 
 import "./calendar.js";
+import "./task-edit.js";
 
 const STORAGE_KEY = "lookout:v1";
 

@@ -6,28 +6,33 @@ const CACHE_TTL_MS = 7 * 60 * 1000;
 
 const CLIENT_ID = GOOGLE_CLIENT_ID;
 const SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
-const AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
-const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
-const REDIRECT_URI = "http://localhost:5173/";
+const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 
 const APPOINTMENTS_LIST_SELECTOR = ".module-appointments .list";
 
-const generateCodeVerifier = () => {
-  const bytes = new Uint8Array(32);
-  window.crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
-};
+let gisScriptPromise;
 
-const base64UrlEncode = (buffer) =>
-  btoa(String.fromCharCode(...new Uint8Array(buffer)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
+const loadGisScript = () => {
+  if (gisScriptPromise) {
+    return gisScriptPromise;
+  }
 
-const createCodeChallenge = async (verifier) => {
-  const data = new TextEncoder().encode(verifier);
-  const digest = await window.crypto.subtle.digest("SHA-256", data);
-  return base64UrlEncode(digest);
+  gisScriptPromise = new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = GIS_SCRIPT_URL;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load GIS"));
+    document.head.appendChild(script);
+  });
+
+  return gisScriptPromise;
 };
 
 const saveToken = (token) => {
@@ -78,63 +83,8 @@ const shouldStartAuth = () => {
   return params.get("calendar_auth") === "1";
 };
 
-const startAuth = async () => {
-  if (!CLIENT_ID || CLIENT_ID === "PASTE_CLIENT_ID_HERE") {
-    return;
-  }
-  const verifier = generateCodeVerifier();
-  const challenge = await createCodeChallenge(verifier);
-  window.sessionStorage.setItem("lookout:calendar:verifier", verifier);
-  const state = generateCodeVerifier();
-  window.sessionStorage.setItem("lookout:calendar:state", state);
-
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    response_type: "code",
-    scope: SCOPES,
-    code_challenge: challenge,
-    code_challenge_method: "S256",
-    state,
-  });
-
-  window.location.assign(`${AUTH_ENDPOINT}?${params.toString()}`);
-};
-
-const exchangeCodeForToken = async (code) => {
-  const verifier = window.sessionStorage.getItem("lookout:calendar:verifier");
-  if (!verifier) {
-    return null;
-  }
-  const body = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: REDIRECT_URI,
-    grant_type: "authorization_code",
-    code,
-    code_verifier: verifier,
-  });
-
-  const response = await fetch(TOKEN_ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
-  });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json();
-  return {
-    access_token: data.access_token,
-    expires_at: Date.now() + (data.expires_in || 0) * 1000,
-  };
-};
-
 const clearAuthParams = () => {
-  if (window.location.search.includes("code=")) {
+  if (window.location.search.includes("calendar_auth") || window.location.search.includes("code=")) {
     const url = new URL(window.location.href);
     url.searchParams.delete("code");
     url.searchParams.delete("state");
@@ -247,33 +197,47 @@ const hydrateFromApi = async (token) => {
   setAppointments(events);
 };
 
+const requestToken = async (prompt) => {
+  if (!CLIENT_ID || CLIENT_ID === "PASTE_CLIENT_ID_HERE") {
+    return null;
+  }
+
+  await loadGisScript();
+
+  return new Promise((resolve) => {
+    const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: SCOPES,
+      prompt,
+      callback: (response) => resolve(response),
+    });
+
+    tokenClient.requestAccessToken({ prompt });
+  });
+};
+
 const initCalendar = async () => {
-  if (shouldStartAuth()) {
-    await startAuth();
-    return;
-  }
-
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-  const state = params.get("state");
-
-  if (code) {
-    const expectedState = window.sessionStorage.getItem("lookout:calendar:state");
-    if (state && expectedState && state !== expectedState) {
-      return;
-    }
-    const token = await exchangeCodeForToken(code);
-    clearAuthParams();
-    if (token) {
-      saveToken(token);
-    }
-  }
+  const wantsAuth = shouldStartAuth();
 
   if (!CLIENT_ID || CLIENT_ID === "PASTE_CLIENT_ID_HERE") {
     return;
   }
 
-  let token = loadToken();
+  if (wantsAuth) {
+    const response = await requestToken("consent");
+    if (response && response.access_token) {
+      const token = {
+        access_token: response.access_token,
+        expires_at: Date.now() + (response.expires_in || 0) * 1000,
+      };
+      saveToken(token);
+      clearAuthParams();
+      await hydrateFromApi(token);
+    }
+    return;
+  }
+
+  const token = loadToken();
   if (!token || tokenExpired(token)) {
     return;
   }

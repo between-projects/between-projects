@@ -2,6 +2,7 @@ import "./time.js";
 import "./weather.js";
 
 import "./calendar.js";
+import "./task-edit.js";
 
 const STORAGE_KEY = "lookout:v1";
 
@@ -10,6 +11,8 @@ const DEFAULT_STATE = {
   notes: [],
   links: [],
 };
+
+let taskState = [];
 
 const selectors = {
   tasks: ".module-tasks .list",
@@ -21,6 +24,33 @@ const emptyStates = {
   tasks: "Nothing pressing.",
   notes: "",
   links: "—",
+};
+
+const normalizeTasks = (value) => {
+  if (!Array.isArray(value)) {
+    return { tasks: [], migrated: false };
+  }
+
+  let migrated = false;
+  const tasks = value
+    .map((item) => {
+      if (typeof item === "string") {
+        migrated = true;
+        return { text: item.trim(), completed: false };
+      }
+      if (item && typeof item.text === "string") {
+        const completed = Boolean(item.completed);
+        if (item.completed !== completed) {
+          migrated = true;
+        }
+        return { text: item.text.trim(), completed };
+      }
+      migrated = true;
+      return { text: "", completed: false };
+    })
+    .filter((item) => item.text.length > 0);
+
+  return { tasks, migrated };
 };
 
 const normalize = (value) => {
@@ -42,11 +72,15 @@ const loadState = () => {
       return { state: { ...DEFAULT_STATE }, shouldPersist };
     }
     const parsed = JSON.parse(raw);
+    const normalizedTasks = normalizeTasks(parsed.tasks);
     const state = {
-      tasks: normalize(parsed.tasks),
+      tasks: normalizedTasks.tasks,
       notes: normalize(parsed.notes),
       links: normalize(parsed.links),
     };
+    if (normalizedTasks.migrated) {
+      shouldPersist = true;
+    }
     return { state, shouldPersist };
   } catch (error) {
     shouldPersist = true;
@@ -87,14 +121,101 @@ const setListItems = (element, items, emptyText) => {
   });
 };
 
+const setTaskItems = (element, tasks, emptyText) => {
+  if (!element) {
+    return;
+  }
+
+  element.innerHTML = "";
+
+  if (tasks.length === 0) {
+    const emptyItem = document.createElement("li");
+    emptyItem.textContent = emptyText;
+    element.appendChild(emptyItem);
+    return;
+  }
+
+  tasks.forEach((task, index) => {
+    const listItem = document.createElement("li");
+    listItem.dataset.taskIndex = String(index);
+    if (task.completed) {
+      listItem.classList.add("task-completed");
+    }
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.className = "task-checkbox";
+    checkbox.checked = Boolean(task.completed);
+    checkbox.setAttribute("aria-label", "Mark task complete");
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "task-text";
+    textSpan.textContent = task.text;
+
+    listItem.appendChild(checkbox);
+    listItem.appendChild(textSpan);
+    element.appendChild(listItem);
+  });
+};
+
+const handleTaskToggle = (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) {
+    return;
+  }
+  if (!target.classList.contains("task-checkbox")) {
+    return;
+  }
+  const listItem = target.closest("li");
+  const index = listItem ? Number(listItem.dataset.taskIndex) : NaN;
+  if (!Number.isInteger(index)) {
+    return;
+  }
+
+  const nextTasks = taskState.map((task, taskIndex) =>
+    taskIndex === index ? { ...task, completed: target.checked } : task
+  );
+  taskState = nextTasks;
+  const { state } = loadState();
+  saveState({ ...state, tasks: nextTasks });
+
+  if (listItem) {
+    listItem.classList.toggle("task-completed", target.checked);
+  }
+};
+
+const wireTaskToggle = (element) => {
+  if (!element || element.dataset.taskToggleBound === "true") {
+    return;
+  }
+  element.addEventListener("change", handleTaskToggle);
+  element.dataset.taskToggleBound = "true";
+};
+
+const hydrateTasks = () => {
+  const { state, shouldPersist } = loadState();
+  if (shouldPersist) {
+    saveState(state);
+  }
+  taskState = state.tasks;
+  const taskList = document.querySelector(selectors.tasks);
+  setTaskItems(taskList, state.tasks, emptyStates.tasks);
+  wireTaskToggle(taskList);
+};
+
 const hydrate = () => {
   const { state, shouldPersist } = loadState();
   if (shouldPersist) {
     saveState(state);
   }
-  setListItems(document.querySelector(selectors.tasks), state.tasks, emptyStates.tasks);
+  taskState = state.tasks;
+  const taskList = document.querySelector(selectors.tasks);
+  setTaskItems(taskList, state.tasks, emptyStates.tasks);
+  wireTaskToggle(taskList);
   setListItems(document.querySelector(selectors.notes), state.notes, emptyStates.notes);
   setListItems(document.querySelector(selectors.links), state.links, emptyStates.links);
 };
+
+window.addEventListener("lookout:tasks-updated", hydrateTasks);
 
 hydrate();

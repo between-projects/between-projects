@@ -42,3 +42,59 @@
 .module-links .list li {
   color: var(--text-primary);
 }
+
+.module-tasks .list {
+  margin-left: -28px;
+  padding-left: 28px;
+}
+
+.module-tasks .list li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.module-tasks .task-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.module-tasks:hover .task-checkbox,
+.module-tasks:focus-within .task-checkbox {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.module-tasks .task-completed {
+  opacity: 0.6;
+}
+
+.module-tasks .task-completed .task-text {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(242, 245, 248, 0.6);
+}
+
+.module-tasks.tasks-editing .list {
+  display: none;
+}
+
+.module-tasks .tasks-editor {
+  width: 100%;
+  min-height: 180px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.55;
+  resize: none;
+  outline: none;
+}

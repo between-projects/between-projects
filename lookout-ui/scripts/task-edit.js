@@ -4,6 +4,7 @@ const TASK_MODULE_SELECTOR = ".module-tasks";
 
 let editing = false;
 let textareaEl = null;
+let suppressClose = false;
 
 const loadState = () => {
   try {
@@ -68,6 +69,11 @@ const enterEditMode = (moduleEl) => {
   moduleEl.appendChild(textareaEl);
   textareaEl.focus();
   textareaEl.setSelectionRange(textareaEl.value.length, textareaEl.value.length);
+
+  suppressClose = true;
+  queueMicrotask(() => {
+    suppressClose = false;
+  });
 };
 
 const exitEditMode = () => {
@@ -104,25 +110,31 @@ const exitEditMode = () => {
   window.dispatchEvent(new Event("lookout:tasks-updated"));
 };
 
-const handleDocumentClick = (event) => {
-  const moduleEl = document.querySelector(TASK_MODULE_SELECTOR);
+const handleModuleClick = (event) => {
+  if (editing) {
+    return;
+  }
+  if (event.target instanceof HTMLInputElement) {
+    return;
+  }
+  const moduleEl = event.target.closest(TASK_MODULE_SELECTOR);
   if (!moduleEl) {
     return;
   }
+  enterEditMode(moduleEl);
+};
 
-  if (moduleEl.contains(event.target)) {
-    if (event.target instanceof HTMLInputElement) {
-      return;
-    }
-    if (!editing) {
-      enterEditMode(moduleEl);
-    }
+const handleDocumentClick = (event) => {
+  if (!editing) {
     return;
   }
-
-  if (editing) {
-    exitEditMode();
+  if (suppressClose) {
+    return;
   }
+  if (event.target.closest(TASK_MODULE_SELECTOR)) {
+    return;
+  }
+  exitEditMode();
 };
 
 const handleDocumentKeydown = (event) => {
@@ -136,6 +148,10 @@ const handleDocumentKeydown = (event) => {
 };
 
 const initTaskEdit = () => {
+  const moduleEl = document.querySelector(TASK_MODULE_SELECTOR);
+  if (moduleEl) {
+    moduleEl.addEventListener("click", handleModuleClick);
+  }
   document.addEventListener("click", handleDocumentClick);
   document.addEventListener("keydown", handleDocumentKeydown);
 };

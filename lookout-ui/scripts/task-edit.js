@@ -4,6 +4,7 @@ const TASK_MODULE_SELECTOR = ".module-tasks";
 
 let editing = false;
 let textareaEl = null;
+let suppressClose = false;
 
 const loadState = () => {
   try {
@@ -45,12 +46,10 @@ const buildTextarea = (value) => {
   return textarea;
 };
 
-const enterEditMode = () => {
+const enterEditMode = (moduleEl) => {
   if (editing) {
     return;
   }
-
-  const moduleEl = document.querySelector(TASK_MODULE_SELECTOR);
   if (!moduleEl) {
     return;
   }
@@ -70,6 +69,11 @@ const enterEditMode = () => {
   moduleEl.appendChild(textareaEl);
   textareaEl.focus();
   textareaEl.setSelectionRange(textareaEl.value.length, textareaEl.value.length);
+
+  suppressClose = true;
+  queueMicrotask(() => {
+    suppressClose = false;
+  });
 };
 
 const exitEditMode = () => {
@@ -90,7 +94,8 @@ const exitEditMode = () => {
 
   const tasks = texts.map((text, index) => {
     const previous = previousTasks[index];
-    const completed = typeof previous === "object" && previous ? Boolean(previous.completed) : false;
+    const completed =
+      typeof previous === "object" && previous ? Boolean(previous.completed) : false;
     return { text, completed };
   });
 
@@ -105,29 +110,49 @@ const exitEditMode = () => {
   window.dispatchEvent(new Event("lookout:tasks-updated"));
 };
 
-const handleDocumentKeydown = (event) => {
-  if (event.defaultPrevented) {
-    return;
-  }
-  if (event.metaKey || event.ctrlKey || event.altKey) {
-    return;
-  }
-
+const handleModuleClick = (event) => {
   if (editing) {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      exitEditMode();
-    }
     return;
   }
+  if (event.target instanceof HTMLInputElement) {
+    return;
+  }
+  const moduleEl = event.target.closest(TASK_MODULE_SELECTOR);
+  if (!moduleEl) {
+    return;
+  }
+  enterEditMode(moduleEl);
+};
 
-  if (event.key.toLowerCase() === "e") {
+const handleDocumentClick = (event) => {
+  if (!editing) {
+    return;
+  }
+  if (suppressClose) {
+    return;
+  }
+  if (event.target.closest(TASK_MODULE_SELECTOR)) {
+    return;
+  }
+  exitEditMode();
+};
+
+const handleDocumentKeydown = (event) => {
+  if (!editing) {
+    return;
+  }
+  if (event.key === "Escape") {
     event.preventDefault();
-    enterEditMode();
+    exitEditMode();
   }
 };
 
 const initTaskEdit = () => {
+  const moduleEl = document.querySelector(TASK_MODULE_SELECTOR);
+  if (moduleEl) {
+    moduleEl.addEventListener("click", handleModuleClick);
+  }
+  document.addEventListener("click", handleDocumentClick);
   document.addEventListener("keydown", handleDocumentKeydown);
 };
 

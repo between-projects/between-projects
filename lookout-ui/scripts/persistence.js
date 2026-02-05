@@ -3,6 +3,7 @@ import "./weather.js";
 
 import "./calendar.js";
 import "./task-edit.js";
+import "./notes-edit.js";
 
 const STORAGE_KEY = "lookout:v1";
 
@@ -73,9 +74,11 @@ const loadState = () => {
     }
     const parsed = JSON.parse(raw);
     const normalizedTasks = normalizeTasks(parsed.tasks);
+    const notesValue =
+      typeof parsed.notes === "string" ? parsed.notes : normalize(parsed.notes);
     const state = {
       tasks: normalizedTasks.tasks,
-      notes: normalize(parsed.notes),
+      notes: notesValue,
       links: normalize(parsed.links),
     };
     if (normalizedTasks.migrated) {
@@ -212,7 +215,26 @@ const hydrate = () => {
   const taskList = document.querySelector(selectors.tasks);
   setTaskItems(taskList, state.tasks, emptyStates.tasks);
   wireTaskToggle(taskList);
-  setListItems(document.querySelector(selectors.notes), state.notes, emptyStates.notes);
+  if (typeof state.notes === "string") {
+    const listEl = document.querySelector(selectors.notes);
+    if (listEl) {
+      listEl.innerHTML = "";
+      const lines = state.notes.split("\n").filter((line) => line.length > 0);
+      if (lines.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.textContent = emptyStates.notes;
+        listEl.appendChild(emptyItem);
+      } else {
+        lines.forEach((line) => {
+          const item = document.createElement("li");
+          item.textContent = line;
+          listEl.appendChild(item);
+        });
+      }
+    }
+  } else {
+    setListItems(document.querySelector(selectors.notes), state.notes, emptyStates.notes);
+  }
   setListItems(document.querySelector(selectors.links), state.links, emptyStates.links);
 };
 

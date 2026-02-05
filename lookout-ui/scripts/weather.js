@@ -1,5 +1,6 @@
 const WEATHER_STORAGE_KEY = "lookout:weather:v1";
 const WEATHER_TTL_MS = 30 * 60 * 1000;
+const STORAGE_KEY = "lookout:v1";
 
 const MODULE_WEATHER_SELECTOR = ".module-time .weather";
 
@@ -50,10 +51,33 @@ const weatherCodeDescriptions = new Map([
   [99, "Thunderstorm with heavy hail"],
 ]);
 
+const loadLocation = () => {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.location) {
+      return null;
+    }
+    const { lat, lon } = parsed.location;
+    if (typeof lat !== "number" || typeof lon !== "number") {
+      return null;
+    }
+    return { lat, lon };
+  } catch (error) {
+    return null;
+  }
+};
+
 const buildWeatherUrl = () => {
+  const location = loadLocation();
+  const latitude = location ? String(location.lat) : "29.9511";
+  const longitude = location ? String(location.lon) : "-90.0715";
   const url = new URL("https://api.open-meteo.com/v1/forecast");
-  url.searchParams.set("latitude", "29.9511");
-  url.searchParams.set("longitude", "-90.0715");
+  url.searchParams.set("latitude", latitude);
+  url.searchParams.set("longitude", longitude);
   url.searchParams.set("current_weather", "true");
   url.searchParams.set("temperature_unit", "fahrenheit");
   return url.toString();
@@ -135,8 +159,11 @@ const scheduleRefresh = (delayMs) => {
   }, delayMs);
 };
 
-const refreshWeather = async () => {
+const refreshWeather = async (force = false) => {
   try {
+    if (force) {
+      window.localStorage.removeItem(WEATHER_STORAGE_KEY);
+    }
     const payload = await fetchWeather();
     saveCachedWeather(payload);
     applyWeather(payload);
@@ -159,5 +186,9 @@ const initWeather = () => {
   }
   refreshWeather();
 };
+
+window.addEventListener("lookout:location-updated", () => {
+  refreshWeather(true);
+});
 
 initWeather();

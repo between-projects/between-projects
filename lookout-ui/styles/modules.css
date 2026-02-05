@@ -98,6 +98,23 @@
   resize: none;
   outline: none;
 }
+
+.module-links.links-editing .list {
+  display: none;
+}
+
+.module-links .links-editor {
+  width: 100%;
+  min-height: 180px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 1.55;
+  resize: none;
+  outline: none;
+}
 .module-tasks.tasks-editing .list {
   display: none;
 }

@@ -4,6 +4,7 @@ import "./weather.js";
 import "./calendar.js";
 import "./task-edit.js";
 import "./notes-edit.js";
+import "./links-edit.js";
 
 const STORAGE_KEY = "lookout:v1";
 

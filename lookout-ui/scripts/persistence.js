@@ -6,6 +6,7 @@ import "./task-edit.js";
 import "./notes-edit.js";
 import "./links-edit.js";
 import "./location.js";
+import "./shutdown.js";
 
 const STORAGE_KEY = "lookout:v1";
 

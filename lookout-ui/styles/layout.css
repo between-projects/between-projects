@@ -39,6 +39,15 @@
   color: var(--text-muted);
   cursor: pointer;
   width: fit-content;
+  display: inline-block;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.2s ease;
+}
+
+.shutdown-trigger:hover {
+  opacity: 0.8;
 }
 
 .module-time {

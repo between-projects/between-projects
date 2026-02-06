@@ -490,9 +490,9 @@ const openOverlay = () => {
   overlayEl = overlay;
 
   suppressClose = true;
-  queueMicrotask(() => {
+  setTimeout(() => {
     suppressClose = false;
-  });
+  }, 0);
 
   action.addEventListener("click", async () => {
     const reflections = {
@@ -562,6 +562,8 @@ const handleTriggerClick = (event) => {
   if (!trigger) {
     return;
   }
+  event.preventDefault();
+  event.stopPropagation();
   openOverlay();
 };
 

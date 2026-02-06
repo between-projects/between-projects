@@ -18,6 +18,8 @@ const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 let overlayEl = null;
 let suppressClose = false;
 let gisPromise = null;
+let inFlight = false;
+let currentRunId = null;
 
 const loadState = () => {
   try {
@@ -435,12 +437,17 @@ const closeOverlay = () => {
     overlayEl.remove();
   }
   overlayEl = null;
+  inFlight = false;
+  currentRunId = null;
 };
 
 const openOverlay = () => {
   closeOverlay();
 
   const snapshot = buildContextSnapshot();
+  const runId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+  currentRunId = runId;
+  let completed = false;
 
   const overlay = document.createElement("div");
   overlay.className = "shutdown-overlay";
@@ -494,67 +501,89 @@ const openOverlay = () => {
     suppressClose = false;
   }, 0);
 
-  action.addEventListener("click", async () => {
-    const reflections = {
-      wentWell: prompt1.value,
-      didntGo: prompt2.value,
-      remaining: prompt3.value,
-    };
+  action.addEventListener(
+    "click",
+    async () => {
+      if (inFlight || completed || currentRunId !== runId) {
+        return;
+      }
+      inFlight = true;
+      action.disabled = true;
 
-    const token = loadToken();
-    let accessToken = token && !tokenExpired(token) ? token.access_token : null;
-    if (!accessToken) {
-      const response = await requestToken();
-      if (!response || !response.access_token) {
-        return;
-      }
-      accessToken = response.access_token;
-      saveToken({
-        access_token: response.access_token,
-        expires_at: Date.now() + (response.expires_in || 0) * 1000,
-      });
-    }
+      const fail = () => {
+        inFlight = false;
+        action.disabled = false;
+      };
 
-    const snapshotNow = buildContextSnapshot();
-    const dateLabel = snapshotNow.header.date;
-    const titleText = `Lookout Shutdown — ${dateLabel}`;
-    const content = formatSnapshotText(snapshotNow, reflections);
+      const reflections = {
+        wentWell: prompt1.value,
+        didntGo: prompt2.value,
+        remaining: prompt3.value,
+      };
 
-    try {
-      const lookoutFolder = await getOrCreateFolder(accessToken, "Lookout");
-      if (!lookoutFolder) {
-        return;
-      }
-      const shutdownFolder = await getOrCreateFolder(
-        accessToken,
-        "Shutdowns",
-        lookoutFolder
-      );
-      if (!shutdownFolder) {
-        return;
-      }
-      const docId = await createDocument(accessToken, titleText, shutdownFolder, content);
-      if (!docId) {
-        return;
-      }
-      const emailSent = await sendEmail(
-        accessToken,
-        `End of Day — ${dateLabel}`,
-        content
-      );
-      if (!emailSent) {
-        return;
+      const token = loadToken();
+      let accessToken = token && !tokenExpired(token) ? token.access_token : null;
+      if (!accessToken) {
+        const response = await requestToken();
+        if (!response || !response.access_token) {
+          fail();
+          return;
+        }
+        accessToken = response.access_token;
+        saveToken({
+          access_token: response.access_token,
+          expires_at: Date.now() + (response.expires_in || 0) * 1000,
+        });
       }
 
-      const state = loadState();
-      saveState({ ...state, tasks: [], notes: "", links: [] });
-      updateListsAfterClear();
-      window.dispatchEvent(new Event("lookout:tasks-updated"));
-      closeOverlay();
-    } catch (error) {
-      // Silent failure preserves calm.
-    }
-  });
+      const snapshotNow = buildContextSnapshot();
+      const dateLabel = snapshotNow.header.date;
+      const titleText = `Lookout Shutdown — ${dateLabel}`;
+      const content = formatSnapshotText(snapshotNow, reflections);
+
+      try {
+        const lookoutFolder = await getOrCreateFolder(accessToken, "Lookout");
+        if (!lookoutFolder) {
+          fail();
+          return;
+        }
+        const shutdownFolder = await getOrCreateFolder(
+          accessToken,
+          "Shutdowns",
+          lookoutFolder
+        );
+        if (!shutdownFolder) {
+          fail();
+          return;
+        }
+        const docId = await createDocument(accessToken, titleText, shutdownFolder, content);
+        if (!docId) {
+          fail();
+          return;
+        }
+        const emailSent = await sendEmail(
+          accessToken,
+          `End of Day - ${dateLabel}`,
+          content
+        );
+        if (!emailSent) {
+          fail();
+          return;
+        }
+
+        const state = loadState();
+        saveState({ ...state, tasks: [], notes: "", links: [] });
+        updateListsAfterClear();
+        window.dispatchEvent(new Event("lookout:tasks-updated"));
+        completed = true;
+        closeOverlay();
+      } catch (error) {
+        // Silent failure preserves calm.
+        fail();
+      }
+    },
+    { once: true }
+  );
 };
 
 const handleTriggerClick = (event) => {

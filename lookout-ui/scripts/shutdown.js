@@ -438,9 +438,7 @@ const closeOverlay = () => {
 };
 
 const openOverlay = () => {
-  if (overlayEl && document.body.contains(overlayEl)) {
-    return;
-  }
+  closeOverlay();
 
   const snapshot = buildContextSnapshot();
 

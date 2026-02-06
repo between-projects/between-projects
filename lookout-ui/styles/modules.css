@@ -140,6 +140,80 @@
   resize: none;
   outline: none;
 }
+
+.shutdown-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 24, 38, 0.45);
+  padding: 32px;
+  z-index: 20;
+}
+
+.shutdown-panel {
+  width: min(720px, 100%);
+  max-height: 80vh;
+  overflow: auto;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  padding: 24px;
+  backdrop-filter: blur(8px);
+}
+
+.shutdown-panel h3 {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0 0 12px;
+  color: var(--text-primary);
+}
+
+.shutdown-prompt {
+  margin: 10px 0 6px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.shutdown-panel textarea {
+  width: 100%;
+  min-height: 72px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.55;
+  padding: 10px 12px;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 8px;
+}
+
+.shutdown-context {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+}
+
+.shutdown-action {
+  margin-top: 18px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 14px;
+  cursor: pointer;
+}
 .module-tasks.tasks-editing .list {
   display: none;
 }

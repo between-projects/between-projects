@@ -33,6 +33,14 @@
   gap: 32px 40px;
 }
 
+.shutdown-trigger {
+  margin-top: 56px;
+  font-size: 14px;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: fit-content;
+}
+
 .module-time {
   justify-self: end;
   max-width: 280px;

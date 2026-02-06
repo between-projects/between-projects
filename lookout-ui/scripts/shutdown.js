@@ -438,7 +438,7 @@ const closeOverlay = () => {
 };
 
 const openOverlay = () => {
-  if (overlayEl) {
+  if (overlayEl && document.body.contains(overlayEl)) {
     return;
   }
 
